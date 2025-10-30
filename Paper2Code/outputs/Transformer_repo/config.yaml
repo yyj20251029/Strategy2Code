@@ -1,0 +1,47 @@
+## config.yaml
+training:
+  steps: 100000
+  optimizer:
+    type: Adam
+    beta1: 0.9
+    beta2: 0.98
+    epsilon: 1e-9
+  learning_rate_schedule:
+    d_model: 512
+    warmup_steps: 4000
+  dropout: 0.1
+  label_smoothing: 0.1
+  token_batch_size: 25000  # Approximate number of tokens per batch for source and target
+model:
+  type: Transformer
+  num_layers: 6
+  d_model: 512
+  d_ff: 2048
+  num_heads: 8
+  d_k: 64
+  d_v: 64
+  shared_embeddings: true
+  positional_encoding: sinusoidal
+datasets:
+  translation:
+    source: WMT2014_EnglishGerman
+    target: WMT2014_EnglishGerman
+    bpe_vocab_size: 37000
+  parsing:
+    dataset: WSJ_PennTreebank
+    vocab_size: 16000
+inference:
+  translation:
+    beam_search:
+      beam_size: 4
+      length_penalty: 0.6
+      max_output_length_expr: "input_length + 50"
+  parsing:
+    beam_search:
+      beam_size: 21
+      length_penalty: 0.3
+      max_output_length_expr: "input_length + 300"
+hardware:
+  gpus: 8
+  base_model_step_time: 0.4  # seconds per step for base model
+  big_model_step_time: 1.0   # seconds per step for big model
