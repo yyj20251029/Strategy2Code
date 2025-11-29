@@ -6,7 +6,7 @@ Link of "Paper2Code: Automating Code Generation from Scientific Papers in Machin
 Detailed Methods on bash:   
 1. git clone https://github.com/going-doer/Paper2Code.git
 2. cd Paper2Code
-3. -r requirements.txt
+3. pip install -r requirements.txt
 4. export OPENAI_API_KEY="sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 5. cd scripts
 6. bash run.sh
