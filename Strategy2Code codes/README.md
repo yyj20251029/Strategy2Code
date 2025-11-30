@@ -1,3 +1,5 @@
+Unocmment the relating parts of papers at the beginning of "run.sh" file first.  
+
 Methods on bash:  
 cd Strategy2Code codes  
 pip install -r requirements.txt  
