@@ -1,0 +1,66 @@
+## config.yaml
+data:
+  source: "yahoo"
+  tickers:
+    - AXP
+    - BA
+    - CAT
+    - CSCO
+    - CVX
+    - DIS
+    - GS
+    - HD
+    - IBM
+    - INTC
+    - JNJ
+    - JPM
+    - KO
+    - MCD
+    - MMM
+    - MRK
+    - MSFT
+    - NKE
+    - PFE
+    - PG
+    - TRV
+    - UNH
+    - V
+    - VZ
+    - WBA
+    - WMT
+    - XOM
+    - HON
+    - CRM
+    - AMGN  ## Dow Jones 30 component stocks as referenced by the paper.
+  start_date: "2000-01-01"  ## Fixed implementation range.
+  end_date: "2024-01-01"    ## Fixed implementation range.
+  interval: "1d"            ## Daily data from Yahoo Finance.
+
+strategy:
+  name: "Adaptive DDPG"     ## Strategy name as described in the paper.
+  type: "adaptive_ddpg"     ## Reflects the method used in the paper.
+  params:
+    alpha_plus: 1.0         ## Learning rate for positive prediction errors (per paper's test setting).
+    alpha_minus: 0.0        ## Learning rate for negative prediction errors (per paper's test setting).
+    gamma: 0.99             ## Discount factor; default common choice.
+    tau: 0.001              ## Soft update parameter for target networks; default engineering choice.
+    actor_lr: 0.0001        ## Actor learning rate; default engineering choice.
+    critic_lr: 0.001        ## Critic learning rate; default engineering choice.
+    exploration_noise:
+      positive: "standard_normal"  ## Standard normal noise for optimistic conditions.
+      negative: "negative_only"    ## Noise process that generates only negative values for pessimistic conditions.
+    # Additional parameters can be added as needed; these defaults are chosen based on the paper's methodology.
+
+backtest:
+  initial_capital: 10000.0      ## Starting capital as used in the paper's experiments.
+  transaction_cost_bp: 5        ## Transaction cost in basis points per trade.
+  rebalance_frequency: "1d"     ## Rebalance daily.
+  allow_short: false            ## Short selling not allowed; portfolio weights constrained to [0, 1].
+  max_leverage: 1.0             ## No leverage allowed; conservative default.
+  risk_free_rate: 0.0           ## Risk-free rate assumption.
+  metrics:
+    - "annual_return"
+    - "volatility"
+    - "sharpe"
+    - "max_drawdown"
+    - "win_rate"               ## Metrics for performance evaluation.

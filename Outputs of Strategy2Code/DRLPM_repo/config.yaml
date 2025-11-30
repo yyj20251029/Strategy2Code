@@ -1,0 +1,37 @@
+## config.yaml
+data:
+  source: "yahoo"
+  tickers: ["000300.SS", "600519.SS", "601318.SS", "000651.SZ"]  ## Example tickers: CSI 300 index constituent proxies; adjust if necessary.
+  start_date: "2000-01-01"  ## Fixed implementation range: start date.
+  end_date: "2024-01-01"    ## Fixed implementation range: end date.
+  interval: "1d"            ## Daily data interval from Yahoo Finance.
+
+strategy:
+  name: "drlpm"           ## Short name for Deep Reinforcement Learning for Portfolio Management.
+  type: "drlpm"           ## Indicates use of a DRL-based portfolio strategy.
+  params:
+    replay_buffer_size: 600         ## As specified in the paper.
+    batch_size: 64                  ## As specified in the paper.
+    actor_learning_rate: 4e-5       ## As specified in the paper.
+    critic_learning_rate: 5e-4      ## As specified in the paper.
+    exploration_noise_mean: 0.05    ## Gaussian noise mean for exploration.
+    exploration_noise_std: 0.25     ## Gaussian noise standard deviation for exploration.
+    training_steps: 300000          ## Total training steps as per the paper.
+    training_episodes: 1191         ## Approximate episodes computed from training_steps and 252 trading days per episode.
+    observation_window: 50          ## Price observation window (n=50) as defined in the paper.
+    arbitrage_threshold: 0.0        ## Default threshold for arbitrage mechanism; flips benchmark weight if risky weights share the same sign.
+    ## Note: Additional hyperparameters from the paper are incorporated here as defaults.
+
+backtest:
+  initial_capital: 100000.0         ## Starting capital for backtesting.
+  transaction_cost: 0.0025          ## Flat transaction cost rate as specified in the paper.
+  rebalance_frequency: "1d"         ## Daily rebalancing, matching the data interval.
+  allow_short: true                 ## Short selling enabled as per the paper.
+  max_leverage: 1.0                 ## Conservative leverage setting; the paper assumes no extra leverage.
+  risk_free_rate: 0.0               ## Risk-free rate used for performance metrics (e.g., Sharpe ratio).
+  metrics:
+    - "annual_return"
+    - "volatility"
+    - "sharpe"
+    - "max_drawdown"
+    - "win_rate"
