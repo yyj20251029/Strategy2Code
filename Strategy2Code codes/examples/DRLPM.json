@@ -1,0 +1,64 @@
+{
+  "paper_id": "DRLPM",
+  "title": "Deep Reinforcement Learning for Portfolio Management",
+  "short_name": "DRLPM",
+  "authors": [
+    "Gang Huang",
+    "Xiaohua Zhou",
+    "Qingyang Song"
+  ],
+  "year": 2020,
+  "venue": "Deep Reinforcement Learning for Portfolio Management",
+  "keywords": [
+    "deep reinforcement learning",
+    "portfolio management",
+    "DDPG",
+    "short selling",
+    "arbitrage",
+    "transaction cost",
+    "CSI 300"
+  ],
+  "abstract": [
+    {
+      "text": "This paper applies deep reinforcement learning to portfolio management and proposes several innovations: adding a short-selling mechanism, designing an arbitrage mechanism based on Arbitrage Pricing Theory, redesigning the activation function for generating portfolio weights, and reconstructing the neural networks in DDPG with image-style deep architectures. The model is applied to randomly selected portfolios built from CSI 300 constituents plus the CSI 300 index. Experiments show that the trained agent can maintain asset weights at nearly fixed values during trading, trade with very low transaction costs, and obtain excess returns over the market benchmark even under relatively high assumed transaction costs."
+    }
+  ],
+  "sections": [
+    {
+      "heading": "1 INTRODUCTION",
+      "text": "The introduction reviews limitations of traditional factor models and econometric methods for asset pricing, including p-hacking, lack of causal clarity, and instability of anomalies. It motivates a data-driven approach where rules are learned directly from data instead of pre-specifying linear relationships. The authors discuss the history of artificial neural networks, the rise of deep learning, and categorize machine learning into supervised, unsupervised, and reinforcement learning. They argue that deep reinforcement learning (DRL) is closest to general AI because the agent interacts with an environment to learn optimal strategies from reward signals. Prior work applied traditional RL and policy gradient methods to single-asset trading, but these approaches either suffer from discrete action explosion or local optima and do not properly handle portfolio-level decisions. Jiang et al. (2017) introduced a DRL framework for cryptocurrency portfolios, but only with long-only mechanisms and without exploiting deep convolutional networks. The authors identify a gap in modeling continuous-time portfolio weights with short selling and proper treatment of portfolio value when weights can be negative. They propose a DRL portfolio model with shorting, arbitrage and redesigned weight calculations to fill this theoretical and practical gap."
+    },
+    {
+      "heading": "2 THEORY AND METHODOLOGY",
+      "text": "This section defines the reinforcement learning framework and its application to portfolio management. The trading process is modeled as a Markov Decision Process with trajectory τ = {S0, A0, R1, S1, A1, ...}. The average reward R̄ over a trading period is defined as the time-average of daily log returns γ_t. The state S_t is composed of a price tensor X_t and weight vector W_t. X_t collects normalized close, high, low, and open prices over an observation window of length n=50 for each asset, arranged as a 3D tensor similar to image data. Each feature V_t^(·) is normalized by the current price so that elements are relative prices. The action space is the continuous weight vector W_t = [ω_0,t, ω_1,t, ..., ω_m,t], where ω_0,t is the cash weight, ω_m,t is the CSI 300 index weight, and negative weights represent short positions. Cash cannot be shorted so ω_0,t ∈ [0,1], while other weights lie in [-1,1]. The portfolio must satisfy ∑_{i=0}^m |ω_i,t| = 1 so that the sum of absolute weights is one even with shorts. The authors explain the economic meaning of short selling in margin or stock-borrow markets and give an example where borrowing ¥300,000 of stock and holding ¥700,000 of other assets leads to a short weight of -0.3 when normalized under their scheme."
+    },
+    {
+      "heading": "2.4 ARBITRAGE MECHANISM",
+      "text": "Based on Arbitrage Pricing Theory, the authors introduce an arbitrage constraint between the benchmark index (CSI 300) and the other risky assets. Intuitively, if some stocks are overvalued, an investor should short those stocks and go long the benchmark, and vice versa for undervalued stocks. To encode this in the action space, the model enforces that the benchmark weight and the sum of other risky asset weights cannot all share the same sign. Formally, the sum of absolute risky weights cannot equal the absolute value of their sum, and the sum of absolute weights excluding the index cannot be zero simultaneously. If after gradient updates all weights become simultaneously positive or negative, the benchmark weight ω_m is flipped in sign to restore the arbitrage structure. This mechanism ensures the portfolio behaves like a long-short strategy relative to the benchmark rather than an unhedged directional bet."
+    },
+    {
+      "heading": "2.5 REWARD FUNCTION AND PORTFOLIO DYNAMICS",
+      "text": "The reward is the daily logarithmic return of the portfolio. The relative price vector Y_t = P_t ⊘ P_{t-1} collects per-asset price ratios, with the first element fixed at 1 for cash. Ignoring transaction costs, portfolio value evolves as ρ_t = ρ_{t-1} · exp[(ln Y_t) · W_{t-1}], where the dot is a vector dot product. Daily log return is γ_t = ln(ρ_t / ρ_{t-1}). Transaction costs are then introduced: after price moves, the portfolio weights automatically evolve to W'_t = (Y_t ⊙ W_{t-1}) / (Y_t · |W_{t-1}|). The agent then reallocates to target weights W_t via the neural network. The transaction cost rate C_t is proportional to the L1 change in risky asset weights between W'_t and W_t, scaled by a per-asset cost μ_t. With costs, portfolio value becomes ρ_t = ρ_{t-1}(1 - C_t) · exp[(ln Y_t) · W_{t-1}]. The authors also discuss a generalized formula including a leverage vector Λ_t but set leverage to 1 for all assets in experiments."
+    },
+    {
+      "heading": "3 DEEP REINFORCEMENT LEARNING ALGORITHM",
+      "text": "The authors choose Deep Deterministic Policy Gradient (DDPG) as the DRL algorithm. DDPG uses an actor network to output deterministic continuous actions and a critic network to approximate the Q-value. Exploration is implemented by adding Gaussian noise N(0.05, 0.25) to the actor output. The algorithm is off-policy and uses experience replay and target networks. The deep neural networks are designed inspired by VGG-style image processing architectures because the price tensor X_t has an image-like 3D structure. The actor network takes X_t as input, applies several convolutional and fully connected layers, and outputs an action vector that is normalized: first min-max scaling to [0,1], then affine transformation to [-1,1], and finally scaling so that the L1 norm equals 1, satisfying the weight constraint. The critic network takes both X_t and W_t; W_t is replicated along the temporal dimension and concatenated as an additional feature channel in the tensor, producing an augmented state S_t for the critic. The critic architecture mirrors the actor but ends with a linear output for Q(S_t, W_t)."
+    },
+    {
+      "heading": "4 EXPERIMENTS",
+      "text": "The empirical study uses Chinese stock market data. Portfolios are built by randomly selecting four CSI 300 constituent stocks and combining them with the CSI 300 index and cash, giving five risky assets plus cash. Stocks must have listing dates before December 31, 2010 to ensure long histories. Price data (open, high, low, close) is sourced from the Wind database; missing values are filled with zeros, and perfect liquidity is assumed. Hyperparameters include replay buffer size 600, batch size 64, Adam optimizers, and learning rates 5e-4 (critic) and 4e-5 (actor). For each training episode, the agent samples a random window of 252 consecutive trading days from the training set to reduce overfitting, and total training steps are 300000 (~1191 episodes). Performance metrics include average daily simple and log returns, annualized Sharpe and Sortino ratios based on both simple and log returns, and maximum drawdown. Transaction costs include stamp tax, commissions, and stock borrowing costs, combined into a per-trade rate of μ_t = 0.0025, which the authors note is conservative and relatively high. Training performance is monitored by regressing average episode returns on training steps; positive regression slopes indicate learning."
+    },
+    {
+      "heading": "4.4 BACK-TESTING RESULTS",
+      "text": "Back-tests are run on four stochastic portfolios with out-of-sample test periods of approximately one year each. Figures show that in all cases, the DRL portfolios end the testing period with higher asset value than the CSI 300 benchmark. Asset weight plots reveal that after initial trading, the agent quickly converges to nearly fixed portfolio weights which are then maintained throughout the test period with only minor fluctuations. Transaction cost plots show a spike on the first day of position opening followed by consistently low daily costs, confirming that the model trades frequently in time but with small adjustments that preserve weight stability. Table 2 reports that all stochastic portfolios outperform CSI 300 on average log returns, Sharpe ratios, and Sortino ratios, although maximum drawdowns are somewhat higher. The authors interpret this as evidence that the DRL agent optimizes investment decisions, producing excess return with reasonable risk control under realistic transaction costs."
+    },
+    {
+      "heading": "4.5 STRATEGY PERFORMANCE COMPARISON",
+      "text": "To benchmark the DRL strategy, the authors construct a multi-factor strategy based on earnings-to-price (value factor) and turnover, following Liu et al. (2019). Turnover is multiplied by -1, both factors are standardized and equally weighted, and stocks are ranked daily within the CSI 300 universe. The top 20 stocks are held long and the bottom 20 short with equal absolute weights ±1/40, obeying the same L1 weight constraint, but transaction costs and leverage are ignored for this baseline. Back-testing results show that DRL portfolios have substantially higher log-daily returns, annualized Sharpe and Sortino ratios than the factor strategy across four experiments. The factor strategy exhibits lower maximum drawdown but consistently inferior performance on reward-based metrics. The authors conclude that the DRL model has practical value and can outperform a traditional multi-factor stock-picking approach under short-selling and transaction cost assumptions."
+    },
+    {
+      "heading": "5 CONCLUSION",
+      "text": "The paper concludes that deep reinforcement learning can be effectively applied to portfolio management with short selling and arbitrage constraints. By redesigning the portfolio weight calculation to handle continuous-time short positions, adding an arbitrage mechanism linking risky assets and the benchmark index, proposing a custom activation and normalization scheme for output weights, and using deep CNN-based actor–critic networks within a DDPG framework, the authors obtain agents that maintain stable portfolio weights and deliver excess returns over the CSI 300 in back-tests with relatively high transaction costs. They argue DRL should not be viewed as a black box because it rests on a well-developed theoretical foundation and can incorporate human prior knowledge through reward design and constraints. They suggest that many algorithmic trading models can be reformulated in DRL terms by specifying an environment, reward function, and action space instead of fixed parametric equations."
+    }
+  ]
+}

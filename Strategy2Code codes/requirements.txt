@@ -1,0 +1,19 @@
+openai>=1.65.4
+vllm>=0.6.4.post1
+transformers>=4.46.3
+tiktoken>=0.9.0
+
+# --- Core quant libraries ---
+numpy>=1.26.0
+pandas>=2.2.0
+yfinance>=0.2.50
+matplotlib>=3.8.0
+scipy>=1.10.0
+numba>=0.59.0
+
+# --- For DRL-based papers ---
+torch>=2.1.0
+gym>=0.26.0
+stable-baselines3>=2.3.0
+
+
